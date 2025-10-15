@@ -60,4 +60,25 @@ class HybridStrokePredictor:
             'prediction': 'Alto riesgo ACV' if hydrid_prob[0] > 0.5 else 'Bajo Riesgo ACV',
             'confidence': float(max(hydrid_prob[0], 1 - hydrid_prob[0])) 
         }
+#Cargar modelos al iniciar
+print("Cargando modelos...")
+try:
+    clinical_model = joblib.load('¿modelo/clinical_stroke.pkl')
+    scaler = joblib.load('modelo/clinical_scaler.pkl')
+    label_encoders = joblib.load('modeol/label_encoders.pkl')
+    cnn_model = load_model('modelo/cnn_stroke_model.h5')
+
+    with open('modelo/hydrid_config.pk1', 'rb') as f:
+        config = pickle.load(f)
     
+    hydrid_system = HybridStrokePredictor(
+        clinical_model=clinical_model,
+        cnn_model=cnn_model,
+        scaler=scaler,
+        label_encoders=label_encoders
+    )
+
+    print("Modelos cargados exitosamente")
+except Exception as e:
+    print(f"Error al cargar modelos: {e}")
+    hydrid_system = None
