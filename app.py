@@ -125,7 +125,7 @@ def model_info():
 
 # Manejo de errores
 @app.errorhandler(413)
-def request_entity_too_large(error)
+def request_entity_too_large(error):
     return jsonify({'error': 'Archivo demasiado grande. Máximo 16MB'}), 413
 
 @app.errorhandler(404)
