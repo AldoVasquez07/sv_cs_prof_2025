@@ -1,17 +1,17 @@
-# Imagen base oficial de Python
-FROM python:3.10-slim
+# Usa una imagen base con TensorFlow preinstalado (reduce el build de 10 min a <1 min)
+FROM tensorflow/tensorflow:2.20.0
 
-# Evitar buffering en logs
+# Evitar buffering de logs en tiempo real
 ENV PYTHONUNBUFFERED=1
 
-# Crear directorio de trabajo
+# Crear y usar directorio de trabajo
 WORKDIR /app
 
-# Copiar dependencias
+# Copiar dependencias primero (para aprovechar la cache de Docker)
 COPY requirements.txt .
 
-# Instalar dependencias
-RUN pip install --no-cache-dir -r requirements.txt
+# Instalar dependencias adicionales
+RUN pip install --no-cache-dir --ignore-installed -r requirements.txt
 
 # Copiar el resto del proyecto
 COPY . .
