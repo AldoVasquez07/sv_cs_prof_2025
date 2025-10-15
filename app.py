@@ -204,6 +204,31 @@ def predict():
                     return jsonify({
                         'error': f'Valor inválido en campo {col}: {str(e)}'
                     }), 400
+        
+        #6. Hacer predicción
+        result = hydrid_system.predict_hydrid(clinical_df.values, filepath)
+        
+        #7. Limpiar archivo temporal
+        os.remove(filepath)
+
+        #8. Retornar resultado
+        return jsonify({
+            'success': True,
+            'result': result,
+            'input_data': {
+                'clinical': clinical_data,
+                'image': filename
+            }
+        })
+    except Exception as e:
+        #Limpiar archivo temporal si existe
+        if 'filepath' in locals() and os.path.exists(filepath):
+            os.remove(filepath)
+        
+        return jsonify({
+            'error' : f'Erro al procesar predicción: {str(e)}'
+        }), 500
+    
 # Manejo de errores
 @app.errorhandler(413)
 def request_entity_too_large(error):
