@@ -165,7 +165,13 @@ def predict():
             clinical_data = request.get_json()
         else:
             return jsonify({'error': 'No se encontraron datos clínicos'}, 400)
-        
+
+        #3. Validar datos clínicos
+        is_valid, error_msg = validate_clinical_data(clinical_data)
+        if not is_valid:
+            return jsonify({'error': error_msg}), 400
+
+        #
 
 # Manejo de errores
 @app.errorhandler(413)
