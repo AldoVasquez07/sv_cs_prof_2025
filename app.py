@@ -123,6 +123,20 @@ def model_info():
         'clinical_features': list(label_encoders.keys())
     })
 
+@app.rout('/predict', methods=['POST'])
+def predict():
+    """
+    Endpoint principal para hacer predicciones
+    
+    Recibe:
+    - Datos clínicos como form-data o JSON
+    - Imagen como archivo
+    
+    Retorna:
+    - Probabilidades de cada modelo
+    - Predicción final
+    - Nivel de confianza
+    """    
 # Manejo de errores
 @app.errorhandler(413)
 def request_entity_too_large(error):
