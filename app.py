@@ -34,6 +34,30 @@ class HybridStrokePredictor:
         self.label_encoders = label_encoders
 
     def predict_clinical(self, clinical_data):
-        """"Predicció basada en datos clínicos"""
+        """"Predicción basada en datos clínicos"""
         clinical_scaled = self.sacler.transform(clinical_data)
         return self.clinical_model.predict_proba(clinical_scaled)[:, 1]
+
+    def predict_image(sel, image_path):
+        """"Predicción basada en imagen"""
+        img = keras_image.load_img(image_path, target_size=IMG_SIZE, color_mode='grayscale')
+        img_array = keras_image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0) / 255.0
+        return self.cnn_model.predict(img_array, verbose=0)[0][0]
+    
+    def predict_hydrid(self, clinical_data, image_path, weights=(0.6,0.4)):
+        """"Predicción hídrida combinando ambos modelos"""
+        clinical_prob = self.predict_clinical(clinical_data)
+        image_prob = self.predict_image(image_path)
+
+        #combinación ponderada
+        hydrid_prob = weights[0] * clinical_prob + weights [1] * image_prob
+
+        return {
+            'clinical_probability': float(clinical_prob[0]),
+            'image_probability': float(image_prob),
+            'hydrid_probabilty': float(hydrid_prob[0]),
+            'prediction': 'Alto riesgo ACV' if hydrid_prob[0] > 0.5 else 'Bajo Riesgo ACV',
+            'confidence': float(max(hydrid_prob[0], 1 - hydrid_prob[0])) 
+        }
+    
