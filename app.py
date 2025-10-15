@@ -102,3 +102,23 @@ def validate_clinical_data(data):
     return True, None
 
 # ENDPOINTS
+@app.route('/healt', methods=['GET'])
+def health_check():
+    """"Verifica el estado de la API"""
+    return jsonify({
+        'status': 'ok',
+        'models_loaded': hydrid_system is not None 
+    })
+
+@app.route('/model-info', methods=['GET'])
+def model_info():
+    """Retorna información sobre los modelos cargados"""
+    if hydrid_system is None:
+        return jsonify({'error': 'Modelos no cargados'}), 500
+
+    return jsonify({
+        'model_version': config.get('model_version', 'unkown'),
+        'weights': config.get('weights', 'unknown'),
+        'img_size': config.get('img_size', 'unknown'),
+        'clinical_features': list(label_encoders.keys())
+    })
