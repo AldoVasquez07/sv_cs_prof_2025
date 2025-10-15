@@ -136,7 +136,37 @@ def predict():
     - Probabilidades de cada modelo
     - Predicción final
     - Nivel de confianza
-    """    
+    """
+
+    if hydrid_system is None:
+        return jsonify({'error': 'Modelos no cargados correctamente'}), 500
+
+    try:
+        # 1. Verificar que hay imagen
+        if 'image' not in request.files:
+            return jsonify({'error': 'No se encontró imagen en la petición'}), 400    
+
+        file = request.files['image']
+
+        if file.filename == '':
+            return jsonify({'error': 'No se seleccionó ningún archivo'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error':'Formato de imagen no permitido. Use PNG, JPG o JPEG'}), 400
+
+        #2. Obtener datos clínicos
+        clinical_data = {}
+
+        #Intentar obtener desde form-data
+        if request.form:
+            clinical_data = request.form.to_dict()
+        # O desde Json
+        elif request.get_json():
+            clinical_data = request.get_json()
+        else:
+            return jsonify({'error': 'No se encontraron datos clínicos'}, 400)
+        
+
 # Manejo de errores
 @app.errorhandler(413)
 def request_entity_too_large(error):
