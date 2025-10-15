@@ -38,7 +38,7 @@ class HybridStrokePredictor:
         clinical_scaled = self.sacler.transform(clinical_data)
         return self.clinical_model.predict_proba(clinical_scaled)[:, 1]
 
-    def predict_image(sel, image_path):
+    def predict_image(self, image_path):
         """"Predicción basada en imagen"""
         img = keras_image.load_img(image_path, target_size=IMG_SIZE, color_mode='grayscale')
         img_array = keras_image.img_to_array(img)
@@ -122,3 +122,24 @@ def model_info():
         'img_size': config.get('img_size', 'unknown'),
         'clinical_features': list(label_encoders.keys())
     })
+
+# Manejo de errores
+@app.errorhandler(413)
+def request_entity_too_large(error)
+    return jsonify({'error': 'Archivo demasiado grande. Máximo 16MB'}), 413
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Endpoint no encontrado'}), 404
+
+@app.error_handler(500)
+def internal_error(error):
+    return jsonify({'error': 'Error interno del servidor'}), 500
+
+if __name__ == '__main__':
+    print("\n" + "="*50)
+    print("Servidor Flask iniciado")
+    print("API disponible en: http://localhost:5000")
+    print("="*50 + "\n")
+
+    app.run(debug=True, host='0.0.0.0', port=5000)
