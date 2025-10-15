@@ -123,7 +123,7 @@ def model_info():
         'clinical_features': list(label_encoders.keys())
     })
 
-@app.rout('/predict', methods=['POST'])
+@app.route('/predict', methods=['POST'])
 def predict():
     """
     Endpoint principal para hacer predicciones
