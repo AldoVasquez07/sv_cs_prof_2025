@@ -82,3 +82,23 @@ try:
 except Exception as e:
     print(f"Error al cargar modelos: {e}")
     hydrid_system = None
+
+# Funciones auxiliares
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_clinical_data(data):
+    """Valida que todos los capos clínicos estén presentes"""
+    required_fields = [
+        'gender', 'age', 'hypertension', 'heart_disease',
+        'ever_married', 'work_type', 'Residence_type',
+        'avg_glucose_level', 'bmi', 'smoking_status'
+    ]
+
+    missing = [field for field in required_fields if field not in data]
+    if missing:
+        return False, f"Campos faltantes: {', '.join(missing)}"
+    
+    return True, None
+
+# ENDPOINTS
