@@ -171,8 +171,39 @@ def predict():
         if not is_valid:
             return jsonify({'error': error_msg}), 400
 
-        #
+        #4. Guardar imagen temporalmente
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
+        #5. Procesar datos clínicos
+        # Convertir tipos de datos
+        clinical_data['age'] = float(clinical_data['age'])
+        clinical_data['hypertension'] = int(clinical_data['hypertension'])
+        clinical_data['heart_disease'] = int(clinical_data['heart_disease'])
+        clinical_data['avg_glucose_level'] = float(clinical_data['avg_glucose_level'])
+        clinical_data['bmi'] = float(clinical_data['bmi'])
+        
+        # Normalizar strings
+        clinical_data['gender'] = clinical_data['gender'].lower()
+        clinical_data['ever_married'] = clinical_data['ever_married'].lower()
+        clinical_data['work_type'] = clinical_data['work_type'].lower()
+        clinical_data['Residence_type'] = clinical_data['Residence_type'].lower()
+        clinical_data['smoking_status'] = clinical_data['smoking_status'].lower()
+
+        # Crear DataFrame
+        clinical_df = pd.DataFrame([clinical_data])
+
+        # Aplicar Label encoders
+        for col, le in hydrid_system.label_encoders.items():
+            if col in clinical_df.columns:
+                try:
+                    clinical_df[col] = le.transform(clinical_df[col])
+                except ValueError as e:
+                    os.remove(filepath) # Limpiar archivo temporal
+                    return jsonify({
+                        'error': f'Valor inválido en campo {col}: {str(e)}'
+                    }), 400
 # Manejo de errores
 @app.errorhandler(413)
 def request_entity_too_large(error):
