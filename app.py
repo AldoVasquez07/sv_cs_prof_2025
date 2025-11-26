@@ -97,7 +97,7 @@ def create_app():
     app = Flask(__name__)
     
     # CORS seguro para frontend
-    CORS(app, origins=["*"])  # Cambia esto por tu dominio si quieres
+    CORS(app, origins=["https://mn-cs-prof-2025.vercel.app"])
 
     hybrid_system, config = load_models()
 
