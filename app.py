@@ -10,23 +10,17 @@ from tensorflow.keras.preprocessing import image as keras_image
 from werkzeug.utils import secure_filename
 
 # ===================================================
-# CONFIG GLOBAL PARA RENDER
+# CONFIG GLOBAL PARA RENDER (OPTIMIZADA)
 # ===================================================
-
 UPLOAD_FOLDER = 'temp_uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 IMG_SIZE = (128, 128)
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-
 # ===================================================
-# CLASE PRINCIPAL DEL MODELO HÍBRIDO
+# CLASE DEL MODELO HÍBRIDO
 # ===================================================
-
 class HybridStrokePredictor:
-    """Sistema híbrido que combina predicciones clínicas e imágenes"""
-
     def __init__(self, clinical_model, cnn_model, scaler, label_encoders):
         self.clinical_model = clinical_model
         self.cnn_model = cnn_model
@@ -46,7 +40,6 @@ class HybridStrokePredictor:
     def predict_hybrid(self, clinical_data, image_path, weights=(0.6, 0.4)):
         clinical_prob = self.predict_clinical(clinical_data)
         image_prob = self.predict_image(image_path)
-
         hybrid_prob = weights[0] * clinical_prob + weights[1] * image_prob
 
         return {
@@ -57,15 +50,25 @@ class HybridStrokePredictor:
             'confidence': float(max(hybrid_prob[0], 1 - hybrid_prob[0]))
         }
 
-
 # ===================================================
-# CARGA DE MODELOS (RENDER)
+# CARGA ÚNICA DE MODELOS (OPTIMIZADA PARA RENDER)
 # ===================================================
 
-def load_models():
-    print("Cargando modelos...")
+clinical_model = None
+cnn_model = None
+scaler = None
+label_encoders = None
+config = None
+hybrid_system = None
+
+def load_models_once():
+    global clinical_model, cnn_model, scaler, label_encoders, config, hybrid_system
+
+    if hybrid_system is not None:
+        return hybrid_system, config
 
     try:
+        print("Cargando modelos...")
         clinical_model = joblib.load('modelo/clinical_stroke_model.pkl')
         scaler = joblib.load('modelo/clinical_scaler.pkl')
         label_encoders = joblib.load('modelo/label_encoders.pkl')
@@ -81,33 +84,36 @@ def load_models():
             label_encoders=label_encoders
         )
 
-        print("Modelos cargados correctamente")
+        print("Modelos cargados correctamente.")
         return hybrid_system, config
 
     except Exception as e:
         print(f"Error cargando modelos: {e}")
         return None, None
 
-
 # ===================================================
-# CREATE_APP PARA RENDER
+# FUNCIÓN FACTORY PARA RENDER
 # ===================================================
 
 def create_app():
     app = Flask(__name__)
-    
-    # CORS seguro para frontend
-    CORS(app, origins=["https://mn-cs-prof-2025.vercel.app"])
 
-    hybrid_system, config = load_models()
+    # CORS SEGURO PARA VERCEL
+    CORS(app, resources={
+        r"/*": {
+            "origins": ["https://mn-cs-prof-2025.vercel.app"],
+            "supports_credentials": True
+        }
+    })
+
+    global hybrid_system, config
+    hybrid_system, config = load_models_once()
 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-    # Helpers
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
     # ===================================================
     # ENDPOINTS
@@ -117,7 +123,6 @@ def create_app():
     def home():
         return jsonify({"status": "API de Predicción ACV funcionando 👍"})
 
-
     @app.route('/health', methods=['GET'])
     def health():
         return jsonify({
@@ -125,14 +130,12 @@ def create_app():
             "models_loaded": hybrid_system is not None
         })
 
-
     @app.route('/predict', methods=['POST'])
     def predict():
         if hybrid_system is None:
             return jsonify({"error": "Modelos no cargados"}), 500
 
         try:
-            # Imagen obligatoria
             if 'image' not in request.files:
                 return jsonify({'error': 'Imagen requerida'}), 400
 
@@ -145,7 +148,6 @@ def create_app():
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
 
-            # Datos clínicos
             data = request.form.to_dict() if request.form else request.get_json()
 
             required = [
@@ -158,7 +160,7 @@ def create_app():
             if missing:
                 return jsonify({'error': f"Faltan campos: {', '.join(missing)}"}), 400
 
-            # Convertir tipos
+            # Conversión de tipos
             data['age'] = float(data['age'])
             data['hypertension'] = int(data['hypertension'])
             data['heart_disease'] = int(data['heart_disease'])
@@ -167,7 +169,6 @@ def create_app():
 
             df = pd.DataFrame([data])
 
-            # Label encoders
             for col, le in hybrid_system.label_encoders.items():
                 df[col] = le.transform(df[col])
 
@@ -179,7 +180,6 @@ def create_app():
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-
 
     @app.route('/model-info')
     def model_info():
@@ -198,7 +198,6 @@ def create_app():
 # ===================================================
 # RUN LOCAL
 # ===================================================
-
 if __name__ == "__main__":
     app = create_app()
     port = int(os.environ.get("PORT", 5000))
