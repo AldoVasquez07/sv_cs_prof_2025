@@ -66,12 +66,12 @@ def load_models():
     print("Cargando modelos...")
 
     try:
-        clinical_model = joblib.load('modelo_n/clinical_stroke_model.pkl')
-        scaler = joblib.load('modelo_n/clinical_scaler.pkl')
-        label_encoders = joblib.load('modelo_n/label_encoders.pkl')
-        cnn_model = load_model('modelo_n/cnn_stroke_model.h5')
+        clinical_model = joblib.load('modelo/clinical_stroke_model.pkl')
+        scaler = joblib.load('modelo/clinical_scaler.pkl')
+        label_encoders = joblib.load('modelo/label_encoders.pkl')
+        cnn_model = load_model('modelo/cnn_stroke_model.h5')
 
-        with open('modelo_n/hybrid_config.pkl', 'rb') as f:
+        with open('modelo/hybrid_config.pkl', 'rb') as f:
             config = pickle.load(f)
 
         hybrid_system = HybridStrokePredictor(
